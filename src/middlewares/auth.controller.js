@@ -19,7 +19,7 @@ export const login = async (req, res, next) => {
         }
         const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
         if (!user || !(await user.comparePassword(password))){
-            return res.status(401).json({ success: false, message: 'Invalid emails oe password' });
+            return res.status(401).json({ success: false, message: 'Invalid emails or password' });
         }
 
         //must confirm email before loggin in

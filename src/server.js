@@ -11,6 +11,7 @@ import attachmentRoutes from './routes/attachment.routes.js';
 import statisticsRoutes from './routes/statistics.routes.js';
 import {errorHandler} from './middlewares/error.middleware.js';
 import recruiterPipelineRoutes from './routes/recruiterPipeline.routes.js';
+import applicationRoutes from './routes/application.routes.js'
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use('/api/v1/recruiter', recruiterPipelineRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/attachments', attachmentRoutes);
 app.use('/api/v1/statistics', statisticsRoutes);
+app.use('/api/v1', applicationRoutes);
 
 //Error Handler
 app.use(errorHandler);
