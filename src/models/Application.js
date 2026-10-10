@@ -35,16 +35,20 @@ const applicationSchema = new mongoose.Schema(
       enum: ['Applied', 'Interview', 'Offer', 'Rejected', 'Withdrawn'],
       default: 'Applied',
     },
-    applicationDeadline: {
+    appliedAt: {
       type: Date,
+      default: Date.now,
+    },
+    deadline: {
+      type: Date,
+      default: null,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// Prevent job seekers from applying to the same job twice
+// Compound unique index to prevent duplicate applications by the same user for the same job
 applicationSchema.index({ owner: 1, job: 1 }, { unique: true });
 
 export default mongoose.model('Application', applicationSchema);
+

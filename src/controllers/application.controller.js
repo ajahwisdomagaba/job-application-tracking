@@ -31,7 +31,7 @@ export const applyToJob = async (req, res, next) => {
       });
     }
 
-    // 3. Check for existing application (prevents duplicate applications even after withdrawal)
+    // 3. Check for existing application (prevents duplicate applications)
     const existingApplication = await Application.findOne({
       owner: userId,
       job: jobId,
@@ -44,7 +44,7 @@ export const applyToJob = async (req, res, next) => {
       });
     }
 
-    // 4. Create the application (automatically copying job & recruiter metadata)
+    // 4. Create the application
     const application = await Application.create({
       owner: userId,
       job: job._id,
@@ -121,6 +121,45 @@ export const getApplications = async (req, res, next) => {
   }
 };
 
+// @desc    Get single job seeker application detail view
+// @route   GET /api/v1/applications/:applicationId
+// @access  Private (Job seeker)
+export const getJobseekerApplication = async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+
+    const application = await Application.findOne({
+      _id: applicationId,
+      owner: req.user._id,
+    })
+      .populate('recruiter', 'name companyName')
+      .populate('job');
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found.',
+      });
+    }
+
+    let interviews = [];
+    if (mongoose.models.Interview) {
+      interviews = await mongoose.model('Interview')
+        .find({ application: application._id })
+        .sort({ roundNumber: 1 })
+        .populate('setBy', 'name companyName');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Application details fetched successfully.',
+      data: { ...application.toObject(), interviews },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Withdraw an active application
 // @route   PATCH /api/v1/applications/:applicationId/withdraw
 // @access  Private (Job seeker)
@@ -141,11 +180,12 @@ export const withdrawApplication = async (req, res, next) => {
         message: 'Application not found',
       });
     }
+
     // Enforce allowed stage move rule (Can only withdraw from Applied or Interview)
     if (!['Applied', 'Interview'].includes(application.currentStage)) {
       return res.status(400).json({
         success: false,
-        message: `Cannot withdraw an application at stage '${application.currentStage}`,
+        message: `Cannot withdraw an application at stage '${application.currentStage}'`,
       });
     }
 
@@ -166,6 +206,46 @@ export const withdrawApplication = async (req, res, next) => {
       success: true,
       message: 'Application withdrawn successfully',
       data: application,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update application deadline (Recruiter)
+// @route   PATCH /api/v1/recruiter/applications/:applicationId/deadline
+// @access  Private (Recruiter)
+export const updateApplicationDeadline = async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const { deadline } = req.body;
+
+    if (!deadline) {
+      return res.status(400).json({
+        success: false,
+        message: 'Deadline field is required.',
+      });
+    }
+
+    const application = await Application.findOne({
+      _id: applicationId,
+      recruiter: req.user._id,
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found or unauthorized.',
+      });
+    }
+
+    application.deadline = new Date(deadline);
+    await application.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Application deadline updated successfully.',
+      data: { deadline: application.deadline },
     });
   } catch (error) {
     next(error);
