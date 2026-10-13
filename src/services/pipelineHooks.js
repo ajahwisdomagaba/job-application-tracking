@@ -11,4 +11,4 @@ async function onStageChanged({ application, oldStage, newStage, interview }) {
   void application; void oldStage; void newStage; void interview;
 }
 
-module.exports = { onStageChanged };
+export { onStageChanged };

@@ -10,6 +10,7 @@ import userRoutes from './routes/user.routes.js';
 import attachmentRoutes from './routes/attachment.routes.js';
 import statisticsRoutes from './routes/statistics.routes.js';
 import {errorHandler} from './middlewares/error.middleware.js';
+import recruiterPipelineRoutes from './routes/recruiterPipeline.routes.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.get('/health', (req, res) => {
 
 //routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/recruiter', recruiterPipelineRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/attachments', attachmentRoutes);
 app.use('/api/v1/statistics', statisticsRoutes);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   getExtension,
   isAllowedAttachment,
-} from '../src/middlewares/upload.middleware.js';
+} from '../middlewares/upload.middleware.js';
 
 test('getExtension normalizes file extensions', () => {
   assert.equal(getExtension('Resume.PDF'), 'pdf');
