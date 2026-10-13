@@ -77,6 +77,7 @@ exports.updateApplicationStatus = async (req, res, next) => {
     let result;
 
     await session.withTransaction(async () => {
+
       // Ownership: the application must belong to THIS recruiter's posting
       const current = await Application.findOne({ _id: applicationId, recruiter: recruiterId }).session(session);
       if (!current) {
@@ -86,7 +87,6 @@ exports.updateApplicationStatus = async (req, res, next) => {
       const oldStage = current.currentStage;
       validateTransition(oldStage, stage, 'recruiter');
 
-      // Conditional update: if another request changed the stage since we read it, this matches nothing
       const updated = await Application.findOneAndUpdate(
         { _id: applicationId, recruiter: recruiterId, currentStage: oldStage },
         { $set: { currentStage: stage } },
@@ -122,6 +122,7 @@ exports.updateApplicationStatus = async (req, res, next) => {
     });
 
     // ---- After commit: notices, emails, reminders. Failures here must not undo the change. ----
+    
     try {
       await onStageChanged({
         application: result.application,
