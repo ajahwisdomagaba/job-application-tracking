@@ -7,6 +7,8 @@ import morgan from 'morgan';
 import {connectDB} from './config/db.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
+import attachmentRoutes from './routes/attachment.routes.js';
+import statisticsRoutes from './routes/statistics.routes.js';
 import {errorHandler} from './middlewares/error.middleware.js';
 
 dotenv.config();
@@ -38,6 +40,8 @@ app.get('/health', (req, res) => {
 //routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/attachments', attachmentRoutes);
+app.use('/api/v1/statistics', statisticsRoutes);
 
 //Error Handler
 app.use(errorHandler);

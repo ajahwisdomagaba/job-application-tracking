@@ -1,0 +1,194 @@
+{
+  "info": {
+    "_postman_id": "82efe28c-40fd-4891-a43d-83e342c0f9be",
+    "name": "Job Tracker - Files and Statistics",
+    "description": "Run in order. Configure the local environment credentials and attachmentFilePath first.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "01 - Login",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": "{{baseUrl}}/auth/login"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('login succeeds', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.expect(body.success).to.eql(true);",
+            "pm.environment.set('token', body.data.token);"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "02 - Upload private attachment",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": "{{attachmentFilePath}}" },
+            { "key": "purpose", "value": "resume", "type": "text" }
+          ]
+        },
+        "url": "{{baseUrl}}/attachments"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('upload returns 201', () => pm.response.to.have.status(201));",
+            "const body = pm.response.json();",
+            "pm.expect(body.success).to.eql(true);",
+            "pm.expect(body.data).not.to.have.property('publicId');",
+            "pm.expect(body.data).not.to.have.property('assetId');",
+            "pm.environment.set('attachmentId', body.data._id);"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "03 - List my attachments",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/attachments?page=1&limit=20&purpose=resume"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('list returns paginated data', () => {",
+            "  pm.response.to.have.status(200);",
+            "  const body = pm.response.json();",
+            "  pm.expect(body.data).to.be.an('array');",
+            "  pm.expect(body.pagination).to.have.keys('page', 'limit', 'total', 'pages');",
+            "});"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "04 - Get attachment metadata",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/attachments/{{attachmentId}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('metadata is private-safe', () => {",
+            "  pm.response.to.have.status(200);",
+            "  const data = pm.response.json().data;",
+            "  pm.expect(data._id).to.eql(pm.environment.get('attachmentId'));",
+            "  pm.expect(data).not.to.have.property('publicId');",
+            "  pm.expect(data).not.to.have.property('assetId');",
+            "});"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "05 - Create short-lived link",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/attachments/{{attachmentId}}/link?ttl=120"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('signed link has requested TTL', () => {",
+            "  pm.response.to.have.status(200);",
+            "  const data = pm.response.json().data;",
+            "  pm.expect(data.url).to.match(/^https:\\/\\//);",
+            "  pm.expect(data.ttlSeconds).to.eql(120);",
+            "});"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "06 - Attachment statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/statistics/attachments?groupBy=month"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('statistics include all breakdowns', () => {",
+            "  pm.response.to.have.status(200);",
+            "  const data = pm.response.json().data;",
+            "  pm.expect(data).to.have.keys('summary', 'byPurpose', 'byMimeType', 'overTime');",
+            "  pm.expect(data.summary.totalFiles).to.be.at.least(1);",
+            "});"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "07 - Reject invalid statistics grouping",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/statistics/attachments?groupBy=year"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('invalid groupBy returns 400', () => pm.response.to.have.status(400));",
+            "pm.expect(pm.response.json().success).to.eql(false);"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "08 - Delete attachment",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/attachments/{{attachmentId}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('delete succeeds', () => pm.response.to.have.status(200));",
+            "pm.expect(pm.response.json().success).to.eql(true);",
+            "pm.environment.unset('attachmentId');"
+          ]
+        }
+      }]
+    }
+  ]
+}
