@@ -83,6 +83,7 @@ test('recruiter can schedule round 2 with the required interview fields', async 
     assert.equal(res.body.data.roundNumber, 2);
     assert.equal(res.body.data.timeZone, 'Africa/Lagos');
     assert.equal(res.body.data.status, 'Scheduled');
+    assert.equal(application.currentStage, 'Applied');
   } finally {
     Application.findOne = findOne;
     Interview.exists = exists;
