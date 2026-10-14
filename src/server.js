@@ -11,24 +11,24 @@ import attachmentRoutes from './routes/attachment.routes.js';
 import statisticsRoutes from './routes/statistics.routes.js';
 import recruiterRoutes from './routes/recruiter.routes.js';
 import jobseekerRoutes from './routes/jobseeker.routes.js';
-import {errorHandler} from './middlewares/error.middleware.js';
+import { errorHandler } from './middlewares/error.middleware.js';
 import recruiterPipelineRoutes from './routes/recruiterPipeline.routes.js';
+import applicationRoutes from './routes/application.routes.js';
 
 dotenv.config();
 
 const app = express();
 
-
-//middlewares
+// Middlewares
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-if(process.env.NODE_ENV === 'development'){
+if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
-//Health check route
+// Health check route
 app.get('/health', (req, res) => {
     res.status(200).json({
         success: true,
@@ -36,7 +36,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-//routes
+// Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/recruiter', recruiterPipelineRoutes);
 app.use('/api/v1/users', userRoutes);
@@ -44,8 +44,9 @@ app.use('/api/v1/attachments', attachmentRoutes);
 app.use('/api/v1/statistics', statisticsRoutes);
 app.use('/api/v1/recruiter', recruiterRoutes);
 app.use('/api/v1/jobseeker', jobseekerRoutes);
+app.use('/api/v1/applications', applicationRoutes); // <-- Mounted here!
 
-//Error Handler
+// Error Handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
