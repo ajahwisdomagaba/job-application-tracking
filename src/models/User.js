@@ -31,24 +31,30 @@ const userSchema = new mongoose.Schema(
     companyName: {
         type: String,
         trim: true,
-        required: [true, "Company name is required"],
-        required: function() { return this.role === ' recruiter'; },
+        required: [
+            function () {
+                return this.role === "recruiter";
+            },
+            "Company name is required",
+        ],
     },
     isEmailConfirmed: {
         type: Boolean,
         default: false,
     },
-    verificationStatus  : {
+    verificationStatus: {
         type: String,
         enum: ["pending", "verified", "rejected"],
-        default: function() { return this.role === ' recruiter' ? 'pending' : 'undefined'; },
+        default: function () {
+            return this.role === "recruiter" ? "pending" : undefined;
+        },
     },
-    verifedBy: {
+    verifiedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default: null,
     },
-    verifedAt: {
+    verifiedAt: {
         type: Date,
         default: null,
     },
@@ -56,7 +62,7 @@ const userSchema = new mongoose.Schema(
         type: Date,
         default: null,
     },
-    rejectedReason: {
+    rejectionReason: {
         type: String,
         default: null,
     },

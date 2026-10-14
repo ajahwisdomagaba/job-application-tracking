@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
-const Application = require('../models/Application');
-const Interview = require('../models/Interview'); // Developer 6's model
-const User = require('../models/User');
-const StatusHistory = require('../models/StatusHistory');
-const AppError = require('../utils/AppError');
-const { RECRUITER_TARGETS, validateTransition } = require('../utils/stageTransitions');
-const { onStageChanged } = require('../services/pipelineHooks');
+import mongoose from 'mongoose';
+import Application from '../models/Application.js';
+import Interview from '../models/Interview.js';
+import User from '../models/User.js';
+import StatusHistory from '../models/statusHistory.js';
+import AppError from '../utils/AppError.js';
+import { RECRUITER_TARGETS, validateTransition } from '../utils/stageTransitions.js';
+import { onStageChanged } from '../services/pipelineHooks.js';
 
 const INTERVIEW_TYPES = ['phone', 'video', 'in-person'];
 
@@ -49,12 +49,12 @@ function parseInterviewInput(raw) {
   return { dateTime, timeZone, type: raw.type, locationOrLink };
 }
 
-exports.updateApplicationStatus = async (req, res, next) => {
+export const updateApplicationStatus = async (req, res, next) => {
   let session;
   try {
     const { applicationId } = req.params;
     const { stage, interview } = req.body || {};
-    const recruiterId = req.user.id;
+    const recruiterId = req.user._id;
 
     // ---- Cheap checks first (no DB session yet) ----
     if (!mongoose.isValidObjectId(applicationId)) {

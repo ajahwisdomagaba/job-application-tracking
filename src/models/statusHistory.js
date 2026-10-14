@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const { STAGES } = require('../utils/stageTransitions');
+import mongoose from 'mongoose';
+import { STAGES } from '../utils/stageTransitions.js';
 
 const { ObjectId } = mongoose.Schema.Types;
 
@@ -46,4 +46,4 @@ statusHistorySchema.statics.record = async function (
   return entry;
 };
 
-module.exports = mongoose.model('StatusHistory', statusHistorySchema);
+export default mongoose.model('StatusHistory', statusHistorySchema);

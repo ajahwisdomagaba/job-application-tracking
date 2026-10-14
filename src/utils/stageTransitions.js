@@ -1,4 +1,4 @@
-const AppError = require('./AppError'); // assumed: new AppError(message, statusCode) from the central error handling
+import AppError from './AppError.js';
 
 const STAGES = ['Applied', 'Interview', 'Offer', 'Rejected', 'Withdrawn'];
 
@@ -46,4 +46,4 @@ function validateTransition(from, to, actorRole) {
   return true;
 }
 
-module.exports = { STAGES, RECRUITER_TARGETS, TRANSITIONS, validateTransition };
+export { STAGES, RECRUITER_TARGETS, TRANSITIONS, validateTransition };
