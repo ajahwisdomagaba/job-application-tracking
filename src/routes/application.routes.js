@@ -1,24 +1,27 @@
 import express from 'express';
 import { 
   applyToJob, 
-  getApplications, 
+  getApplications,
+  getJobseekerApplication,
   withdrawApplication 
 } from '../controllers/application.controller.js';
 import { protect, requireJobseeker } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
-// Apply middleware to all routes in this file
-router.use(protect);
-router.use(requireJobseeker);
-
-// POST /api/v1/jobs/:jobId/apply
-router.post('/jobs/:jobId/apply', applyToJob);
-
-// GET /api/v1/applications
-router.get('/applications', getApplications);
-
-// PATCH /api/v1/applications/:applicationId/withdraw
-router.patch('/applications/:applicationId/withdraw', withdrawApplication);
+router.post('/jobs/:jobId/apply', protect, requireJobseeker, applyToJob);
+router.get('/applications', protect, requireJobseeker, getApplications);
+router.get(
+  '/applications/:applicationId',
+  protect,
+  requireJobseeker,
+  getJobseekerApplication,
+);
+router.patch(
+  '/applications/:applicationId/withdraw',
+  protect,
+  requireJobseeker,
+  withdrawApplication,
+);
 
 export default router;

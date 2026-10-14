@@ -3,6 +3,8 @@ import test from 'node:test';
 import mongoose from 'mongoose';
 import Application from '../src/models/Application.js';
 import Interview from '../src/models/Interview.js';
+import Reminder from '../src/models/Reminder.js';
+import StatusHistory from '../src/models/statusHistory.js';
 import {
   getJobseekerApplication,
   scheduleInterview,
@@ -178,19 +180,29 @@ test('recruiter can set an application deadline using a calendar date', async ()
   }
 });
 
-test('job seeker application detail includes its separately stored interviews', async () => {
+const chain = (result) => ({
+  sort() {
+    return this;
+  },
+  populate: async () => result,
+});
+
+test('job seeker application detail includes its timeline, interviews, and reminders', async () => {
   const application = makeApplication();
   const interview = makeInterview(application);
+  const timelineEntry = { oldStage: null, newStage: 'Applied' };
+  const reminder = { source: 'interview', isActive: true };
   const findApplication = Application.findOne;
   const findInterviews = Interview.find;
+  const findHistory = StatusHistory.find;
+  const findReminders = Reminder.find;
   Application.findOne = () => ({
     populate: async () => application,
   });
-  Interview.find = () => ({
-    sort() {
-      return this;
-    },
-    populate: async () => [interview],
+  Interview.find = () => chain([interview]);
+  StatusHistory.find = () => chain([timelineEntry]);
+  Reminder.find = () => ({
+    sort: async () => [reminder],
   });
 
   try {
@@ -207,10 +219,16 @@ test('job seeker application detail includes its separately stored interviews', 
     );
 
     assert.equal(res.statusCode, 200);
+    assert.equal(res.body.data.timeline.length, 1);
+    assert.equal(res.body.data.timeline[0].newStage, 'Applied');
     assert.equal(res.body.data.interviews.length, 1);
     assert.equal(res.body.data.interviews[0].roundNumber, 2);
+    assert.equal(res.body.data.reminders.length, 1);
+    assert.equal(res.body.data.reminders[0].source, 'interview');
   } finally {
     Application.findOne = findApplication;
     Interview.find = findInterviews;
+    StatusHistory.find = findHistory;
+    Reminder.find = findReminders;
   }
 });

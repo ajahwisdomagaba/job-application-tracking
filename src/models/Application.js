@@ -34,10 +34,7 @@ const applicationSchema = new mongoose.Schema(
       type: String,
       enum: ['Applied', 'Interview', 'Offer', 'Rejected', 'Withdrawn'],
       default: 'Applied',
-    },
-    appliedAt: {
-      type: Date,
-      default: Date.now,
+      index: true,
     },
     deadline: {
       type: Date,
