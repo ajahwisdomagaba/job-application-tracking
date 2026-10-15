@@ -1,8 +1,3 @@
-// controllers/job.controller.js  (ES module version)
-// Public, read-only job board.
-//   GET /api/v1/jobs?field=&search=&page=1&limit=10
-//   GET /api/v1/jobs/:jobId
-
 import mongoose from 'mongoose';
 import JobPost from '../models/JobPost.js';
 import AppError from '../utils/AppError.js'; // assumed default export: new AppError(message, statusCode)
