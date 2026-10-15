@@ -11,11 +11,11 @@ const notificationSchema = new mongoose.Schema(
     application: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Application',
-      required: true,
+      required: [true, 'Application reference is required'],
     },
     type: {
       type: String,
-      required: true,
+      required: [true, 'Notification type is required'],
       enum: [
         'new_application',
         'interview_set',
@@ -27,14 +27,23 @@ const notificationSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      required: true,
+      required: [true, 'Notification message is required'],
     },
     isRead: {
       type: Boolean,
       default: false,
     },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      immutable: true,
+    },
   },
-  { timestamps: { createdAt: true, updatedAt: false } },
+  { versionKey: false, timestamps: { createdAt: true, updatedAt: false } },
 );
+
+notificationSchema.index({ recipient: 1, application: 1, type: 1 });
+notificationSchema.index({ recipient: 1, isRead: 1 });
+notificationSchema.index({ createdAt: -1 });
 
 export default mongoose.model('Notification', notificationSchema);

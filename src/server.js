@@ -13,6 +13,9 @@ import recruiterRoutes from './routes/recruiter.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import recruiterPipelineRoutes from './routes/recruiterPipeline.routes.js';
 import applicationRoutes from './routes/application.routes.js';
+import jobRoutes from './routes/job.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import { startCronDaemon } from './services/cron.service.js';
 
 dotenv.config();
 
@@ -42,7 +45,9 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/attachments', attachmentRoutes);
 app.use('/api/v1/statistics', statisticsRoutes);
 app.use('/api/v1/recruiter', recruiterRoutes);
+app.use('/api/v1/jobs', jobRoutes);
 app.use('/api/v1', applicationRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Error Handler
 app.use(errorHandler);
@@ -55,6 +60,8 @@ const startServer = async () => {
         console.log(`Server is running IN ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
     });
 };
+
+startCronDaemon();
 
 startServer().catch((error) => {
     console.error("Application startup failed:", error.message);
