@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import Application from '../models/Application.js';
 import Interview from '../models/Interview.js';
 import User from '../models/User.js';
-import StatusHistory from '../models/statusHistory.js';
+import StatusHistory from '../models/StatusHistory.js';
 import AppError from '../utils/AppError.js';
 import { RECRUITER_TARGETS, validateTransition } from '../utils/stageTransitions.js';
 import { onStageChanged } from '../services/pipelineHooks.js';
@@ -54,7 +54,7 @@ export const updateApplicationStatus = async (req, res, next) => {
   try {
     const { applicationId } = req.params;
     const { stage, interview } = req.body || {};
-    const recruiterId = req.user._id;
+    const recruiterId = req.user.id;
 
     // ---- Cheap checks first (no DB session yet) ----
     if (!mongoose.isValidObjectId(applicationId)) {
@@ -72,12 +72,11 @@ export const updateApplicationStatus = async (req, res, next) => {
     }
 
     // ---- All-or-nothing transaction ----
-    
+
     session = await mongoose.startSession();
     let result;
 
     await session.withTransaction(async () => {
-
       // Ownership: the application must belong to THIS recruiter's posting
       const current = await Application.findOne({ _id: applicationId, recruiter: recruiterId }).session(session);
       if (!current) {
@@ -87,6 +86,7 @@ export const updateApplicationStatus = async (req, res, next) => {
       const oldStage = current.currentStage;
       validateTransition(oldStage, stage, 'recruiter');
 
+      // Conditional update: if another request changed the stage since we read it, this matches nothing
       const updated = await Application.findOneAndUpdate(
         { _id: applicationId, recruiter: recruiterId, currentStage: oldStage },
         { $set: { currentStage: stage } },
@@ -122,7 +122,6 @@ export const updateApplicationStatus = async (req, res, next) => {
     });
 
     // ---- After commit: notices, emails, reminders. Failures here must not undo the change. ----
-    
     try {
       await onStageChanged({
         application: result.application,

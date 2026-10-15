@@ -1,12 +1,12 @@
-import AppError from './AppError.js';
+import AppError from './AppError.js'; 
 
-const STAGES = ['Applied', 'Interview', 'Offer', 'Rejected', 'Withdrawn'];
+export const STAGES = ['Applied', 'Interview', 'Offer', 'Rejected', 'Withdrawn'];
 
 // Stages a recruiter may request through PATCH /recruiter/applications/:id/status
-const RECRUITER_TARGETS = ['Interview', 'Offer', 'Rejected'];
+export const RECRUITER_TARGETS = ['Interview', 'Offer', 'Rejected'];
 
 // from -> { to: actorRole }
-const TRANSITIONS = Object.freeze({
+export const TRANSITIONS = Object.freeze({
   Applied: { Interview: 'recruiter', Rejected: 'recruiter', Withdrawn: 'jobseeker' },
   Interview: { Offer: 'recruiter', Rejected: 'recruiter', Withdrawn: 'jobseeker' },
   Offer: {},
@@ -20,7 +20,7 @@ const TRANSITIONS = Object.freeze({
  * @param {string} to        requested stage
  * @param {'recruiter'|'jobseeker'} actorRole
  */
-function validateTransition(from, to, actorRole) {
+export function validateTransition(from, to, actorRole) {
   if (!STAGES.includes(to)) {
     throw new AppError(`Unknown stage "${to}".`, 400);
   }
@@ -45,5 +45,3 @@ function validateTransition(from, to, actorRole) {
 
   return true;
 }
-
-export { STAGES, RECRUITER_TARGETS, TRANSITIONS, validateTransition };
