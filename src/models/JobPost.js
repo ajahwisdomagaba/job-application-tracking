@@ -32,8 +32,20 @@ const jobPostSchema = new mongoose.Schema(
       trim: true,
     },
     requirements: {
-      type: [String],
-      default: [],
+      type: [
+        {
+          type: String,
+          trim: true,
+          minlength: [1, 'Each requirement must contain text'],
+        },
+      ],
+      required: [true, 'At least one requirement is required'],
+      validate: {
+        validator: (items) =>
+          Array.isArray(items) &&
+          items.some((item) => typeof item === 'string' && item.trim().length > 0),
+        message: 'At least one requirement is required',
+      },
     },
     location: {
       type: String,
