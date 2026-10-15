@@ -6,6 +6,10 @@ import StatusHistory from '../models/statusHistory.js';
 import AppError from '../utils/AppError.js';
 import { RECRUITER_TARGETS, validateTransition } from '../utils/stageTransitions.js';
 import { onStageChanged } from '../services/pipelineHooks.js';
+import {
+  cancelAllApplicationReminders,
+  scheduleInterviewReminders,
+} from '../services/reminderLifecycle.service.js';
 
 const INTERVIEW_TYPES = ['phone', 'video', 'in-person'];
 
@@ -122,7 +126,25 @@ export const updateApplicationStatus = async (req, res, next) => {
     });
 
     // ---- After commit: notices, emails, reminders. Failures here must not undo the change. ----
-    
+    // Cancel all reminders for the application if it is rejected
+    // Schedule interview reminders for the application if it is in the Interview stage
+
+    try {
+      if (stage === 'Rejected') {
+        await cancelAllApplicationReminders(result.application._id);
+      }
+      if (result.interview) {
+        await scheduleInterviewReminders({
+          recipient: result.application.owner,
+          application: result.application._id,
+          interviewId: result.interview._id,
+          dateTime: result.interview.dateTime,
+        });
+      }
+    } catch (reminderErr) {
+      console.error('Post-commit reminder update failed:', reminderErr);
+    }
+
     try {
       await onStageChanged({
         application: result.application,

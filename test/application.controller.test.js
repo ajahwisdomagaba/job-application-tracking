@@ -55,12 +55,14 @@ test('recruiter can schedule round 2 with the required interview fields', async 
   const findOne = Application.findOne;
   const exists = Interview.exists;
   const create = Interview.create;
+  const createReminder = Reminder.create;
   Application.findOne = async (query) => {
     assert.ok(query.recruiter.equals(application.recruiter));
     return application;
   };
   Interview.exists = async () => false;
   Interview.create = async (data) => new Interview(data);
+  Reminder.create = async () => ({});
 
   try {
     const res = makeResponse();
@@ -90,6 +92,7 @@ test('recruiter can schedule round 2 with the required interview fields', async 
     Application.findOne = findOne;
     Interview.exists = exists;
     Interview.create = create;
+    Reminder.create = createReminder;
   }
 });
 
@@ -157,7 +160,11 @@ test('recruiter can cancel an interview round', async () => {
 test('recruiter can set an application deadline using a calendar date', async () => {
   const application = makeApplication();
   const findOne = Application.findOne;
+  const updateReminders = Reminder.updateMany;
+  const createReminder = Reminder.create;
   Application.findOne = async () => application;
+  Reminder.updateMany = async () => ({ modifiedCount: 0 });
+  Reminder.create = async () => ({});
 
   try {
     const res = makeResponse();
@@ -177,6 +184,8 @@ test('recruiter can set an application deadline using a calendar date', async ()
     assert.equal(res.body.data.deadline.toISOString(), '2026-12-01T00:00:00.000Z');
   } finally {
     Application.findOne = findOne;
+    Reminder.updateMany = updateReminders;
+    Reminder.create = createReminder;
   }
 });
 

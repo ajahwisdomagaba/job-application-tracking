@@ -6,6 +6,11 @@ import Notification from '../models/Notification.js';
 import Reminder from '../models/Reminder.js';
 import StatusHistory from '../models/statusHistory.js';
 import { validateTransition } from '../utils/stageTransitions.js';
+import {
+  cancelAllApplicationReminders,
+  scheduleDeadlineReminder,
+  scheduleInterviewReminders,
+} from '../services/reminderLifecycle.service.js';
 
 const STAGES = ['Applied', 'Interview', 'Offer', 'Rejected', 'Withdrawn'];
 
@@ -288,10 +293,7 @@ export const withdrawApplication = async (req, res, next) => {
       throw historyError;
     }
 
-    await Reminder.updateMany(
-      { application: application._id, isActive: true },
-      { $set: { isActive: false } },
-    );
+    await cancelAllApplicationReminders(application._id);
 
     res.status(200).json({
       success: true,
@@ -340,6 +342,12 @@ export const updateApplicationDeadline = async (req, res, next) => {
 
     application.deadline = parsedDeadline;
     await application.save();
+    // Schedule a deadline reminder for the application
+    await scheduleDeadlineReminder({
+      recipient: application.owner,
+      application: application._id,
+      deadlineDate: application.deadline,
+    });
 
     res.status(200).json({
       success: true,
@@ -469,12 +477,21 @@ export const scheduleInterview = async (req, res, next) => {
     assertInterviewType(type);
     assertLocationOrLink(locationOrLink);
 
-    await findOwnedApplication(req.params.applicationId, req.user._id);
+
+    // Schedule an interview reminder for the application
+    const application = await findOwnedApplication(req.params.applicationId, req.user._id);
     if (await Interview.exists({ application: req.params.applicationId, roundNumber })) {
       throw createError(409, `Interview round ${roundNumber} already exists.`);
     }
 
     const interview = await Interview.create(scheduledInterview);
+
+    await scheduleInterviewReminders({
+      recipient: application.owner,
+      application: application._id,
+      interviewId: interview._id,
+      dateTime: interview.dateTime,
+    });
 
     res.status(201).json({
       success: true,

@@ -4,6 +4,7 @@ import Notification from '../models/Notification.js';
 import Interview from '../models/Interview.js';
 import Application from '../models/Application.js';
 import User from '../models/User.js';
+import { sendEmail } from './email.service.js';
 
 // Helper: Calculate next interval and send time based on the target event
 const calculateNextSend = (targetDateTime, currentInterval) => {
@@ -40,6 +41,37 @@ const calculateNextSend = (targetDateTime, currentInterval) => {
   };
 };
 
+export const describeDueReminder = async (lockedReminder) => {
+  if (lockedReminder.source === 'interview') {
+    const interview = await Interview.findById(lockedReminder.sourceId);
+    if (!interview || interview.status === 'Cancelled') {
+      return { deactivate: true };
+    }
+    const when = new Date(interview.dateTime).toLocaleString('en-US', {
+      timeZone: interview.timeZone || 'Africa/Lagos',
+    });
+    return {
+      deactivate: false,
+      targetDateTime: interview.dateTime,
+      message: `Reminder: You have an upcoming interview round ${interview.roundNumber} on ${when} (${interview.type}).`,
+    };
+  }
+
+  if (lockedReminder.source === 'deadline') {
+    const app = await Application.findById(lockedReminder.application);
+    if (!app?.deadline) {
+      return { deactivate: true };
+    }
+    return {
+      deactivate: false,
+      targetDateTime: app.deadline,
+      message: `Reminder: Application deadline for ${app.jobTitle} at ${app.companyName} is in 24 hours.`,
+    };
+  }
+
+  return { deactivate: true };
+};
+
 export const startCronDaemon = () => {
   // Runs every 5 minutes: '*/5 * * * *'
   cron.schedule('*/5 * * * *', async () => {
@@ -72,25 +104,13 @@ export const startCronDaemon = () => {
         let message = '';
         let targetDateTime = null;
 
-        if (lockedReminder.source === 'interview') {
-          const interview = await Interview.findById(lockedReminder.sourceId);
-          if (!interview || interview.status === 'Cancelled') {
-            await Reminder.findByIdAndUpdate(lockedReminder._id, { isActive: false });
-            continue;
-          }
-          targetDateTime = interview.dateTime;
-          message = `Reminder: You have an upcoming interview round ${interview.roundNumber} on ${new Date(
-            interview.dateTime
-          ).toLocaleString('en-US', { timeZone: interview.timeZone || 'Africa/Lagos' })} (${interview.type}).`;
-        } else if (lockedReminder.source === 'deadline') {
-          const app = await Application.findById(lockedReminder.application);
-          if (!app || !app.applicationDeadline) {
-            await Reminder.findByIdAndUpdate(lockedReminder._id, { isActive: false });
-            continue;
-          }
-          targetDateTime = app.applicationDeadline;
-          message = `Reminder: Application deadline for ${app.jobTitle} at ${app.companyName} is in 24 hours.`;
+        const dispatch = await describeDueReminder(lockedReminder);
+        if (dispatch.deactivate) {
+          await Reminder.findByIdAndUpdate(lockedReminder._id, { isActive: false });
+          continue;
         }
+        message = dispatch.message;
+        targetDateTime = dispatch.targetDateTime;
 
         // 1. Dispatch In-App Notification
         await Notification.create({
@@ -100,9 +120,19 @@ export const startCronDaemon = () => {
           message,
         });
 
-        // 2. Dispatch Email (stubbed / wired to your nodemailer transport)
-        // const user = await User.findById(lockedReminder.recipient);
-        // await sendEmail({ to: user.email, subject: 'Job Application Reminder', text: message });
+        // 2. Dispatch email. A missing mailbox or SMTP config must not stop the schedule.
+        try {
+          const user = await User.findById(lockedReminder.recipient).select('email');
+          if (user?.email) {
+            await sendEmail({
+              to: user.email,
+              subject: 'Job Application Reminder',
+              text: message,
+            });
+          }
+        } catch (emailError) {
+          console.error('Reminder email could not be sent:', emailError.message);
+        }
 
         // 3. Update or Deactivate Reminder
         if (lockedReminder.repeatInterval === 'once') {

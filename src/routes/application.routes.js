@@ -8,6 +8,7 @@ import {
 import { protect, requireJobseeker } from '../middlewares/auth.middleware.js';
 import { apiLimiter } from '../middlewares/rateLimiter.middleware.js';
 
+
 const router = express.Router();
 
 router.use(apiLimiter);
