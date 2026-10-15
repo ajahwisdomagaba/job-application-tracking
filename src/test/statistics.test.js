@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildCreatedAtFilter,
   parseStatisticsQuery,
-} from '../src/utils/statistics.js';
+} from '../utils/statistics.js';
 
 test('statistics query defaults to daily grouping', () => {
   const result = parseStatisticsQuery({});
