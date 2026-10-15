@@ -9,15 +9,6 @@ export const allowedAttachmentTypes = new Map([
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ['docx'],
   ],
-  ['text/plain', ['txt']],
-  ['text/csv', ['csv']],
-  ['application/vnd.ms-excel', ['xls']],
-  [
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ['xlsx'],
-  ],
-  ['image/jpeg', ['jpg', 'jpeg']],
-  ['image/png', ['png']],
 ]);
 
 export const getExtension = (filename = '') =>
@@ -28,9 +19,9 @@ export const isAllowedAttachment = (file) => {
   return Boolean(extensions?.includes(getExtension(file.originalname)));
 };
 
-const parsedMaxSize = Number(process.env.MAX_ATTACHMENT_SIZE_MB || 10);
+const parsedMaxSize = Number(process.env.MAX_ATTACHMENT_SIZE_MB || 5);
 export const maxAttachmentSizeMb =
-  Number.isFinite(parsedMaxSize) && parsedMaxSize > 0 ? parsedMaxSize : 10;
+  Number.isFinite(parsedMaxSize) && parsedMaxSize > 0 ? parsedMaxSize : 5;
 
 export const uploadSingleAttachment = multer({
   storage: multer.memoryStorage(),
@@ -43,7 +34,7 @@ export const uploadSingleAttachment = multer({
   fileFilter: (req, file, callback) => {
     if (!isAllowedAttachment(file)) {
       const error = new Error(
-        'Unsupported file. Allowed formats: PDF, DOC, DOCX, TXT, CSV, XLS, XLSX, JPG, JPEG, PNG.',
+        'Unsupported file. Allowed formats: PDF, DOC, DOCX.',
       );
       error.statusCode = 415;
       return callback(error);

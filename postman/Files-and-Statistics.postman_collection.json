@@ -132,22 +132,22 @@
       }]
     },
     {
-      "name": "06 - Attachment statistics",
+      "name": "06 - Job-seeker statistics",
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/statistics/attachments?groupBy=month"
+        "url": "{{baseUrl}}/statistics?groupBy=month"
       },
       "event": [{
         "listen": "test",
         "script": {
           "type": "text/javascript",
           "exec": [
-            "pm.test('statistics include all breakdowns', () => {",
+            "pm.test('statistics include application outcomes', () => {",
             "  pm.response.to.have.status(200);",
             "  const data = pm.response.json().data;",
-            "  pm.expect(data).to.have.keys('summary', 'byPurpose', 'byMimeType', 'overTime');",
-            "  pm.expect(data.summary.totalFiles).to.be.at.least(1);",
+            "  pm.expect(data).to.have.keys('summary', 'byStage', 'overTime');",
+            "  pm.expect(data.summary.totalApplications).to.be.a('number');",
             "});"
           ]
         }
@@ -158,7 +158,7 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/statistics/attachments?groupBy=year"
+        "url": "{{baseUrl}}/statistics?groupBy=year"
       },
       "event": [{
         "listen": "test",

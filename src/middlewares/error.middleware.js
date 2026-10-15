@@ -5,7 +5,7 @@ export const errorHandler = (err, req, res, next) => {
     if (err.name === 'MulterError') {
       statusCode = 400;
       if (err.code === 'LIMIT_FILE_SIZE') {
-        message = `File exceeds the ${process.env.MAX_ATTACHMENT_SIZE_MB || 10} MB limit`;
+        message = `File exceeds the ${process.env.MAX_ATTACHMENT_SIZE_MB || 5} MB limit`;
       } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
         message = 'Use a single file in the file form-data field';
       }

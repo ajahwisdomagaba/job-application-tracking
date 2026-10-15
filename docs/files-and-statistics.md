@@ -10,7 +10,7 @@ Copy `.env.example` to `.env` and configure:
 
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
 - `CLOUDINARY_UPLOAD_FOLDER` (default `job-tracker/attachments`)
-- `MAX_ATTACHMENT_SIZE_MB` (default `10`)
+- `MAX_ATTACHMENT_SIZE_MB` (default `5`)
 - `SIGNED_LINK_TTL_SECONDS` (default `300`, request values are constrained to
   60–3600 seconds)
 
@@ -22,7 +22,7 @@ Copy `.env.example` to `.env` and configure:
 
 Send `multipart/form-data` with:
 
-- `file`: one PDF, DOC, DOCX, TXT, CSV, XLS, XLSX, JPG, JPEG, or PNG file
+- `file`: one PDF, DOC, or DOCX file, up to 5 MB by default
 - `purpose`: optional; `resume`, `cover_letter`, `portfolio`,
   `verification_document`, or `other`
 
@@ -52,7 +52,20 @@ TTL is in seconds and is constrained to 60–3600.
 Cloudinary deletion must succeed (or report already absent) before the database
 record is removed.
 
-## Statistics
+## Job-seeker statistics
+
+`GET /api/v1/statistics`
+
+This job-seeker-only endpoint summarizes the caller's applications. It returns
+total and active applications, interviews, offers, rejections, withdrawals,
+the offer rate, a stage breakdown, and an applications-over-time series.
+
+Optional query parameters:
+
+- `from`, `to`: ISO-8601 timestamps or `YYYY-MM-DD`
+- `groupBy`: `day`, `week`, or `month` (default `day`)
+
+## Attachment storage statistics
 
 `GET /api/v1/statistics/attachments`
 

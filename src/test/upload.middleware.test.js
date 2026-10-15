@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  allowedAttachmentTypes,
   getExtension,
   isAllowedAttachment,
+  maxAttachmentSizeMb,
 } from '../middlewares/upload.middleware.js';
 
 test('getExtension normalizes file extensions', () => {
@@ -20,6 +22,21 @@ test('attachment validation requires matching MIME type and extension', () => {
   );
   assert.equal(
     isAllowedAttachment({
+      mimetype: 'application/msword',
+      originalname: 'resume.doc',
+    }),
+    true,
+  );
+  assert.equal(
+    isAllowedAttachment({
+      mimetype:
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      originalname: 'resume.docx',
+    }),
+    true,
+  );
+  assert.equal(
+    isAllowedAttachment({
       mimetype: 'application/pdf',
       originalname: 'malware.exe',
     }),
@@ -27,9 +44,17 @@ test('attachment validation requires matching MIME type and extension', () => {
   );
   assert.equal(
     isAllowedAttachment({
-      mimetype: 'application/x-msdownload',
-      originalname: 'malware.exe',
+      mimetype: 'image/png',
+      originalname: 'portfolio.png',
     }),
     false,
   );
+});
+
+test('upload contract allows only PDF, DOC, and DOCX at 5 MB by default', () => {
+  assert.deepEqual(
+    [...allowedAttachmentTypes.values()].flat().sort(),
+    ['doc', 'docx', 'pdf'],
+  );
+  assert.equal(maxAttachmentSizeMb, 5);
 });
